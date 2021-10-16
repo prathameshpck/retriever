@@ -24,7 +24,7 @@ class LabelledDataset(Dataset):
         
 
     def __len__(self):
-        pass 
+        return sum(map(lambda x: len(self.data[x]), self.data))
 
     def __getitem__(self , idx, label):
         pass
@@ -36,4 +36,5 @@ class LabelledDataset(Dataset):
         self.df['category'] = encoder.transform(df['category'])
         #print(df)
 
-test = LabelledDataset('clinc150/clinc_train.csv')
+test = LabelledDataset('clinc150/clinc_train_5.csv')
+print(test.__len__())
