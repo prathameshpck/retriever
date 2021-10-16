@@ -15,7 +15,13 @@ class LabelledDataset(Dataset):
         encoder.fit(self.df.category)
         
         self.df['category'] = encoder.transform(self.df['category'])    
-        print(self.df.groupby(['category']).agg({'text': ','.join }).iloc[0].astype(str))
+        self.data = list((self.df.groupby(['category']).agg({'text': '<::>'.join })).to_dict().values())[0]
+
+        
+        self.data = {k:v.split('<::>') for k,v in self.data.items()}
+        
+        
+        
 
     def __len__(self):
         pass 
@@ -30,4 +36,4 @@ class LabelledDataset(Dataset):
         self.df['category'] = encoder.transform(df['category'])
         #print(df)
 
-test = LabelledDataset('clinc150/clinc_train_10.csv')
+test = LabelledDataset('clinc150/clinc_train.csv')
