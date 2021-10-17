@@ -1,7 +1,7 @@
 from pandas.core.arrays import string_
-import torch 
 import numpy as np 
 import pandas as pd
+import torch
 from torch.utils import data 
 from torch.utils.data import Dataset
 from sklearn.preprocessing import LabelEncoder
@@ -11,17 +11,21 @@ pd.options.display.max_colwidth = 200
 sentence_encoder = 'all-distilroberta-v1'
 
 class LabelledDataset(Dataset):
-    def __init__(self ,datapath , sentence_encoder):
-                
+    def __init__(self ,datapath , sentence_encoder = None):             
         self.data = self.df_to_dict(datapath)
-        self.encoded_data = self.encoder(sentence_encoder)
-        print(self.encoded_data[149][0])
+        if sentence_encoder:
+            self.data = self.encoder(sentence_encoder)
+        #print((self.data[0]))
+       
 
     def __len__(self):
         return sum(map(lambda x: len(self.data[x]), self.data))
 
-    def __getitem__(self , idx, label):
-        return self.encoded_data[label][idx]
+    def __getitem__(self , x):
+        
+        batch = {k:self.data[k][v] for k,v in x[0].items()}
+        return batch
+        
 
     def encoder(self , encoder ):
         model = SentenceTransformer(encoder)
@@ -37,4 +41,4 @@ class LabelledDataset(Dataset):
       
         return {k:v.split('<::>') for k,v in self.data.items()}
 
-test = LabelledDataset('clinc150/clinc_train_5.csv' , sentence_encoder)
+#test = LabelledDataset('./clinc150/clinc_full.csv' , sentence_encoder)
