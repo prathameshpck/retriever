@@ -9,10 +9,10 @@ class UniformSampler(Sampler):
     
     """
 
-    def __init__(self, data_source , b = 5 , train_samples = 10):
+    def __init__(self, data_source , b = 5 , num_samples = 10):
         self.data = data_source
         self.b = b
-        self.train_samples= train_samples
+        self.num_samples= num_samples
 
     def __iter__(self):
         
@@ -24,7 +24,7 @@ class UniformSampler(Sampler):
         # return iter(torch.stack(result))
 
         content = []
-        for i in range(self.train_samples):
+        for i in range(self.num_samples):
                 sample = {}
                 for key in self.data.keys():
                     indices = torch.randperm(len(self.data[key]))[:self.b]
