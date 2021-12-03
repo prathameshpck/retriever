@@ -19,12 +19,24 @@ def collate_fn(data):
     
     return torch.stack([v for v in data[0].values()])
 
+class ClassificationDataset(Dataset):
+    def __init__(self ,path_to_df , sentence_encoder ) -> None:
+        super().__init__()
+        self.df = pd.read_csv(path_to_df)
+        self.model = SentenceTransformer(sentence_encoder)
+
+    def __len__(self):
+        return len(self.df)
+    
+    def __getitem__(self, index):
+        return self.model.encode(self.df.iloc[index]['text']) , self.df.iloc[index]['category']
+
 
 class LabelledDataset(Dataset):
     def __init__(self ,datapath , sentence_encoder = None):             
         self.data = self.df_to_dict(datapath)
         if sentence_encoder:
-            self.data = self.encoder(sentence_encoder)
+            self.data = self.encode(sentence_encoder)
         print("Dataset loaded successfully")
        
 
@@ -37,16 +49,16 @@ class LabelledDataset(Dataset):
         return batch
         
 
-    def encoder(self , encoder ):
+    def encode(self , encoder ):
         model = SentenceTransformer(encoder)
         return {k:model.encode(v , convert_to_tensor=True) for k,v in self.data.items()}
 
     
     def df_to_dict(self , path_to_df ):
         self.df = pd.read_csv(path_to_df)
-        encoder = LabelEncoder()
-        encoder.fit(self.df.category)
-        self.df['category'] = encoder.transform(self.df['category'])    
+        self.encoder = LabelEncoder()
+        self.encoder.fit(self.df.category)
+        self.df['category'] = self.encoder.transform(self.df['category'])    
         self.data = list((self.df.groupby(['category']).agg({'text': '<::>'.join })).to_dict().values())[0]
       
         return {k:v.split('<::>') for k,v in self.data.items()}
@@ -78,12 +90,14 @@ class UniformSampler(Sampler):
         for i in range(self.num_samples):
                 sample = {}
                 for key in self.data.keys():
+                    
                     indices = torch.randperm(len(self.data[key]))[:self.b]
                     #print(indices)
                     sample[key] = indices.tolist()
+               
                 content.append(sample)
                 
-
+                
                 yield (content)
                 
         
