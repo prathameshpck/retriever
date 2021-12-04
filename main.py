@@ -23,7 +23,7 @@ writer = SummaryWriter()
 
 
 
-dataset = 'clinc'
+dataset = 'banking'
 
 
 if dataset == 'hwu':
@@ -36,7 +36,7 @@ elif dataset == 'clinc':
 hyper_parameters = {
             'samples_per_batch' : 2000,
             'b' : 150,
-            'num_samples':35000,
+            'num_samples':200000,
             'lr' : 0.0005
 }
 
@@ -48,12 +48,13 @@ class MLPwSoftmax(nn.Module):
         self.input_layer = nn.Linear(num_intents,100)
         self.mlp = nn.Sequential(
                     nn.ReLU(),
-                    nn.Linear(100,200),
+                    nn.Linear(100,100),
                     nn.ReLU(),
-                    nn.Linear(200,150),
+                    nn.Linear(100,100),
                     nn.ReLU()
+
         )
-        self.output_layer = nn.Linear(150 , num_intents)
+        self.output_layer = nn.Linear(100 , num_intents)
 
     def forward(self , x):
         x = self.input_layer(x)
@@ -80,7 +81,7 @@ optim = Adam(model.parameters() , lr=hyper_parameters['lr'])
 
 
 
-train_loader = DataLoader(train_dataset , sampler=sampler ,collate_fn = collate_fn,batch_size=32 )
+train_loader = DataLoader(train_dataset , sampler=sampler ,collate_fn = collate_fn,batch_size=128 )
 test_loader = DataLoader(test_dataset , batch_size=1)
 
 start_time = time.time()
@@ -98,7 +99,7 @@ for n,x in tqdm(enumerate(train_loader)):
         s_reduced = reduction_function(similarity_matrix ,intent,example, type = 'max')
        # print(s_reduced)
         optim.zero_grad()
-        #print(s_reduced)
+        print(s_reduced.shape)
         outputs = model.forward(s_reduced)
 
         #label = to_onehot(intent).reshape(1,150).cuda()

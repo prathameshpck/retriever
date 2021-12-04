@@ -1,3 +1,4 @@
+from typing import final
 import torch
 from os import X_OK
 from torch.utils.data.sampler import Sampler
@@ -91,11 +92,22 @@ class UniformSampler(Sampler):
                 sample = {}
                 for key in self.data.keys():
                     
-                    indices = torch.randperm(len(self.data[key]))[:self.b]
+                    if len(self.data[key]) < self.b:
+                        indices = list(range(len(self.data[key]))) 
+                        extra_samples =  torch.randint(0 , len(self.data[key]),(self.b-len(indices),) )
+                        final_indices = indices + extra_samples.tolist()
+                        #print(len(final_indices))
+                        #print(len(final_indices) , len(indices) , len(extra_samples))
+
+                    else:
+
+                        final_indices = torch.randperm(len(self.data[key]))[:self.b]
                     #print(indices)
-                    sample[key] = indices.tolist()
-               
+                        final_indices = final_indices.tolist()
+                    sample[key] = final_indices
+                    
                 content.append(sample)
+             
                 
                 
                 yield (content)
