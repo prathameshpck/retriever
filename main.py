@@ -36,7 +36,7 @@ elif dataset == 'clinc':
 hyper_parameters = {
             'samples_per_batch' : 2000,
             'b' : 150,
-            'num_samples':200000,
+            'num_samples':50000,
             'lr' : 0.0005
 }
 
@@ -81,7 +81,7 @@ optim = Adam(model.parameters() , lr=hyper_parameters['lr'])
 
 
 
-train_loader = DataLoader(train_dataset , sampler=sampler ,collate_fn = collate_fn,batch_size=128 )
+train_loader = DataLoader(train_dataset , sampler=sampler ,collate_fn = collate_fn,batch_size=64 )
 test_loader = DataLoader(test_dataset , batch_size=1)
 
 start_time = time.time()
@@ -99,7 +99,7 @@ for n,x in tqdm(enumerate(train_loader)):
         s_reduced = reduction_function(similarity_matrix ,intent,example, type = 'max')
        # print(s_reduced)
         optim.zero_grad()
-        print(s_reduced.shape)
+        #(s_reduced.shape)
         outputs = model.forward(s_reduced)
 
         #label = to_onehot(intent).reshape(1,150).cuda()
