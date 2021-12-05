@@ -36,33 +36,46 @@ elif dataset == 'clinc':
 hyper_parameters = {
             'samples_per_batch' : 2000,
             'b' : 150,
-            'num_samples':50000,
-            'lr' : 0.0005
+            'num_samples':1,
+            'lr' : 0.000005,
+            'reduction_function':'max',
+            'batch_size':64, 
+            'architecture': [num_intents,100,100,num_intents]
 }
 
 
 
 class MLPwSoftmax(nn.Module):
-    def __init__(self):
+    def __init__(self, network_architecure):
         super().__init__()
-        self.input_layer = nn.Linear(num_intents,100)
-        self.mlp = nn.Sequential(
-                    nn.ReLU(),
-                    nn.Linear(100,100),
-                    nn.ReLU(),
-                    nn.Linear(100,100),
-                    nn.ReLU()
+        # self.input_layer = nn.Linear(num_intents,100)
+        # self.mlp = nn.Sequential(
+        #             nn.ReLU(),
+        #             # nn.Linear(100,100),
+        #             # nn.ReLU(),
+        #             nn.Linear(100,100),
+        #             nn.ReLU()
 
-        )
-        self.output_layer = nn.Linear(100 , num_intents)
+        # )
+        # self.output_layer = nn.Linear(100 , num_intents)
+        arch = []
+        for layer in range(len(network_architecure) - 1):
+          arch.append(nn.Linear(network_architecure[layer] , network_architecure[layer+1]))
+          arch.append(nn.ReLU())
 
-    def forward(self , x):
-        x = self.input_layer(x)
-        return self.output_layer(self.mlp(x))
+        self.mlp = nn.Sequential(*arch[:-1])
+          
+
+
+
+    def forward(self , x):   
+        return self.mlp(x)
 
 
     
 samples_per_batch = hyper_parameters['samples_per_batch']
+
+model = MLPwSoftmax(hyper_parameters['architecture'])
 
 
 sentence_encoder = 'all-distilroberta-v1'
@@ -72,7 +85,7 @@ test_dataset = ClassificationDataset('./'+dataset+'_ibm.csv', sentence_encoder)
 
 sampler = UniformSampler(train_dataset.data ,b=hyper_parameters['b'], num_samples=hyper_parameters['num_samples'])
 
-model = MLPwSoftmax()
+
 
 model = model.cuda()
 criterion = CrossEntropyLoss()
@@ -81,7 +94,7 @@ optim = Adam(model.parameters() , lr=hyper_parameters['lr'])
 
 
 
-train_loader = DataLoader(train_dataset , sampler=sampler ,collate_fn = collate_fn,batch_size=64 )
+train_loader = DataLoader(train_dataset , sampler=sampler ,collate_fn = collate_fn,batch_size=hyper_parameters['batch_size'] )
 test_loader = DataLoader(test_dataset , batch_size=1)
 
 start_time = time.time()
@@ -96,7 +109,7 @@ for n,x in tqdm(enumerate(train_loader)):
 
         similarity_matrix = torch.tensordot(x , chosen_sample , dims = ([2],[0]))
         #print(similarity_matrix)
-        s_reduced = reduction_function(similarity_matrix ,intent,example, type = 'max')
+        s_reduced = reduction_function(similarity_matrix ,intent,example, type = hyper_parameters['reduction_function'])
        # print(s_reduced)
         optim.zero_grad()
         #(s_reduced.shape)
@@ -170,6 +183,6 @@ print(confusion_matrix(actual , predicted , normalize='true').diagonal())
 torch.save(model.mlp , "model.pt")
  
 
-with open('logs.csv' , 'a') as csvfile:
+with open('logsv2.csv' , 'a') as csvfile:
   csvwriter = csv.writer(csvfile)
-  csvwriter.writerow([dataset+'train' , num_intents , elapsed_time , hyper_parameters['num_samples'] , hyper_parameters['b'] , hyper_parameters['lr'] , hyper_parameters['samples_per_batch'] , accuracy])
+  csvwriter.writerow([dataset+'train' , num_intents , elapsed_time , hyper_parameters['num_samples'] , hyper_parameters['b'] , hyper_parameters['lr'] , hyper_parameters['samples_per_batch'] ,hyper_parameters['architecture'] , hyper_parameters['batch_size'] , hyper_parameters['reduction_function'] , accuracy])
